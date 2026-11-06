@@ -1,0 +1,12 @@
+{
+  "estudos": [
+    {
+      "disciplina": "portugues",
+      "conteudo": "dd",
+      "horasEstudadas": 3,
+      "status": "Pendente",
+      "id": "4-vpRfvojmY"
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}
