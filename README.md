@@ -1,45 +1,46 @@
-# Controle de Estudos - Aplicação Mobile com JWT e Níveis de Usuário
+# Controle de Estudos — Aplicação Mobile com Autenticação JWT
 
-Plataforma de gestão acadêmica e organização de rotina de estudos desenvolvida em React Native com Expo, integrada a uma API REST em Node.js/Express e base de dados relacional MySQL.
-
----
-
-## 💡 1. Problema Atual e Solução Proposta
-
-* **O Problema:** Estudantes frequentemente enfrentam dificuldades para organizar a sua carga horária, gerir disciplinas e acompanhar o progresso das suas tarefas de estudo antes das avaliações.
-* **A Solução:** O aplicativo **Controle de Estudos** resolve este problema permitindo o planeamento individualizado, controlo de horas dedicadas e monitorização de status de tarefas (Pendente/Concluído) em tempo real, com isolamento seguro de dados por utilizador.
+Aplicação mobile desenvolvida para auxiliar estudantes na organização de tarefas, matérias e rotinas de estudo, oferecendo controle de acesso por níveis de usuário e integração completa com API REST e banco de dados relacional[cite: 1, 2].
 
 ---
 
-## 🚀 2. Tecnologias Utilizadas
+## 1. Problema Identificado e Solução Proposta
 
-* **Front-end:** React Native, Expo, React Navigation (Native Stack), Axios.
-* **Back-end:** Node.js, Express REST API, JSONWebToken (JWT), Bcrypt.js, CORS.
-* **Banco de Dados:** MySQL.
-
----
-
-## 👥 3. Níveis de Usuário e Permissões
-
-* **Modo Visitante / Exploração:** Permite visualizar a interface e a tela de informações sem necessidade de cadastro prévio. A tentativa de criar ou gerir dados força o redirecionamento para o login.
-* **Perfil Usuário / Estudante:** Acesso autenticado exclusivo aos seus próprios estudos cadastrados (isolados via chave estrangeira `usuario_id`).
-* **Perfil Administrador:** Permite auditoria global e visualização de registos no sistema.
+* **Problema:** Muitos estudantes enfrentam dificuldades para organizar prazos, disciplinas e metas de estudo de forma centralizada e estruturada, o que prejudica o acompanhamento do progresso acadêmico[cite: 2, 3].
+* **Público Afetado:** Estudantes do ensino médio, técnico e pré-vestibular.
+* **Solução:** O aplicativo **Controle de Estudos** centraliza o gerenciamento de atividades acadêmicas em uma interface mobile intuitiva, permitindo cadastrar, consultar, atualizar e excluir metas de estudo (CRUD), com autenticação segura e controle de permissões por perfil[cite: 2, 5].
 
 ---
 
-## 🔒 4. Segurança e Arquitetura
+## 2. Tecnologias Utilizadas
 
-* **Autenticação JWT:** Proteção de rotas no back-end com validação de tokens enviados via cabeçalho *Bearer Token*.
-* **Hash de Senhas:** Criptografia segura de credenciais utilizando a biblioteca `bcrypt` no servidor.
-* **Alertas Universais:** Compatibilidade multiplataforma nativa para lidar com diálogos de confirmação tanto em navegadores Web quanto em dispositivos móveis (Android/iOS).
+* **Front-end Mobile:** React Native com Expo e React Navigation[cite: 2].
+* **Back-end (API REST):** Node.js com Express[cite: 2].
+* **Banco de Dados:** MySQL[cite: 2].
+* **Segurança e Autenticação:** Criptografia de senhas com `bcrypt` e autenticação baseada em JSON Web Token (`JWT`) com envio via cabeçalho `Bearer Token`[cite: 2].
 
 ---
 
-## ⚙️ 5. Como Executar o Projeto
+## 3. Níveis de Usuário e Controle de Permissões
 
-1. **Configurar o Banco de Dados:**
-   * Crie uma base de dados no MySQL chamada `controle_estudos` e execute os scripts de criação de tabelas para `usuarios` e `estudos` (com chave estrangeira `usuario_id`).
-2. **Executar a API (Back-end):**
-   * Entre na pasta da API (`cd api-mysql`), instale as dependências (`npm install`) e inicie o servidor (`node server.js` ou `npm start`).
-3. **Executar o Aplicativo (Front-end):**
-   * Na pasta do projeto (`ControleEstudos`), instale as dependências (`npm install`) e execute o Expo (`npx expo start`).
+O sistema implementa dois níveis de acesso controlados via *middleware* no back-end[cite: 2, 5]:
+
+1. **Usuário Comum (Estudante):** Pode realizar cadastro, efetuar login, visualizar suas informações e gerenciar suas próprias atividades de estudo (CRUD).
+2. **Administrador:** Possui acesso privilegiado às rotas administrativas protegidas para supervisão e gestão geral do sistema.
+
+---
+
+## 4. Estrutura do Repositório
+
+```text
+Trabalhotec/
+├── ControleEstudos/       # Código-fonte do aplicativo mobile (React Native / Expo)
+│   ├── src/
+│   │   ├── screens/       # Telas (Login, Cadastro, Home, Perfil, Formulários)
+│   │   └── services/      # Integração com a API (fetch / Bearer Token)
+│   └── App.js
+├── api-mysql/             # Código-fonte da API REST (Node.js / Express)
+│   ├── database.sql       # Script SQL de criação do banco de dados e tabelas
+│   ├── server.js          # Configuração do servidor, rotas, middlewares e JWT
+│   └── package.json
+└── README.md              # Documentação oficial do projeto
