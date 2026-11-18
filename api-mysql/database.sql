@@ -1,8 +1,8 @@
-CREATE DATABASE IF NOT EXISTS controle_estudos;
+DROP DATABASE IF EXISTS controle_estudos;
+CREATE DATABASE controle_estudos;
 USE controle_estudos;
 
--- Tabela de usuários com suporte a criptografia e níveis
-CREATE TABLE IF NOT EXISTS usuarios (
+CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
@@ -10,8 +10,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     nivel VARCHAR(20) DEFAULT 'comum'
 );
 
--- Tabela de estudos (CRUD) perfeitamente alinhada com a API
-CREATE TABLE IF NOT EXISTS estudos (
+CREATE TABLE estudos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     usuario_id INT NOT NULL,
     disciplina VARCHAR(100) NOT NULL,
