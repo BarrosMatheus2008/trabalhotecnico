@@ -1,99 +1,148 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View, Alert, Platform } from 'react-native';
-import api from '../services/api';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  SafeAreaView,
+  StatusBar,
+  ActivityIndicator
+} from 'react-native';
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({
+  apiUrl,
+  showAlert,
+  onLoginSuccess,
+  onIrCadastro,
+  onVoltarVisitante
+}) {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [carregando, setCarregando] = useState(false);
 
-  const showAlert = (titulo, mensagem) => {
-    if (Platform.OS === 'web') {
-      window.alert(`${titulo}\n\n${mensagem}`);
-    } else {
-      Alert.alert(titulo, mensagem);
-    }
-  };
-
-  const handleLogin = async () => {
-    if (!email.trim() || !senha.trim()) {
-      showAlert('Atenção', 'Por favor, preencha o e-mail e a senha!');
+  const realizarLogin = async () => {
+    if (!email || !senha) {
+      showAlert('Atencao', 'Informe seu e-mail e sua senha para entrar.');
       return;
     }
 
+    setCarregando(true);
     try {
-      const response = await api.post('/login', { email, senha });
-      const { message, token, usuario } = response.data;
+      const response = await fetch(`${apiUrl}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, senha })
+      });
 
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      const data = await response.json().catch(() => ({}));
 
-      showAlert('Sucesso', message || 'Login efetuado com sucesso!');
-      navigation.replace('Home', { usuario, token });
+      if (response.ok && data.token) {
+        setEmail('');
+        setSenha('');
+        await onLoginSuccess(data);
+        showAlert('Bem-vindo', 'Entrada realizada com sucesso!');
+      } else {
+        showAlert('Senha incorreta ou e-mail invalido', data.erro || 'Verifique seus dados e tente novamente.');
+      }
     } catch (error) {
-      const mensagemErro = error.response?.data?.error || 'Erro ao conectar com o servidor.';
-      showAlert('Erro no Login', mensagemErro);
+      showAlert('Erro de conexao', 'Nao foi possivel conectar ao servidor.');
+    } finally {
+      setCarregando(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      {/* Clique no título leva para a tela de organização das matérias */}
-      <TouchableOpacity 
-        onPress={() => {
-          const usuarioVisitante = { id: 0, nome: 'Visitante', email: 'visitante@estudos.com', nivel: 'visitante' };
-          navigation.navigate('Home', { usuario: usuarioVisitante });
-        }}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.titulo}>Controle de Estudos 📚</Text>
-      </TouchableOpacity>
-      
-      <Text style={styles.subtitulo}>Plataforma de Gestão Acadêmica</Text>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F1F5F9" />
+      <ScrollView contentContainerStyle={styles.authScroll}>
+        <View style={styles.authCard}>
+          <Text style={styles.authTitle}>Entrar na Conta</Text>
+          <Text style={styles.authSubtitle}>Acesse seu painel sincronizado com o MySQL.</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="E-mail"
-        placeholderTextColor="#888"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-      />
+          <Text style={styles.label}>E-mail</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="seuemail@exemplo.com"
+            placeholderTextColor="#94A3B8"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+          />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Senha"
-        placeholderTextColor="#888"
-        secureTextEntry
-        value={senha}
-        onChangeText={setSenha}
-      />
+          <Text style={styles.label}>Senha</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Digite sua senha"
+            placeholderTextColor="#94A3B8"
+            secureTextEntry
+            value={senha}
+            onChangeText={setSenha}
+          />
 
-      <TouchableOpacity style={styles.botao} onPress={handleLogin} activeOpacity={0.8}>
-        <Text style={styles.textoBotao}>Entrar</Text>
-      </TouchableOpacity>
+          {carregando ? (
+            <View style={{ marginTop: 12, alignItems: 'center' }}>
+              <ActivityIndicator size="small" color="#2563EB" />
+              <Text style={{ marginTop: 6, color: '#64748B', fontSize: 13 }}>Autenticando...</Text>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.primaryButton} onPress={realizarLogin}>
+              <Text style={styles.primaryButtonText}>Entrar</Text>
+            </TouchableOpacity>
+          )}
 
-      <TouchableOpacity 
-        style={styles.botaoSobre} 
-        onPress={() => navigation.navigate('About')} 
-        activeOpacity={0.8}
-      >
-        <Text style={styles.textoBotaoSobre}>ℹ️ Conhecer o Aplicativo (Sobre)</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => navigation.navigate('Register')} activeOpacity={0.8}>
-        <Text style={styles.linkCadastro}>Não tem uma conta? Cadastre-se</Text>
-      </TouchableOpacity>
-    </View>
+          <TouchableOpacity style={styles.linkButton} onPress={onIrCadastro}>
+            <Text style={styles.linkText}>Nao tem conta? Cadastre-se</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.linkButton} onPress={onVoltarVisitante}>
+            <Text style={styles.backText}>Voltar para a tela inicial</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f4f6f9', padding: 20 },
-  titulo: { fontSize: 28, fontWeight: 'bold', color: '#007bff', marginBottom: 5 },
-  subtitulo: { fontSize: 15, color: '#666', marginBottom: 25 },
-  input: { width: '100%', maxWidth: 400, backgroundColor: '#fff', padding: 15, borderRadius: 8, borderWidth: 1, borderColor: '#ddd', marginBottom: 15 },
-  botao: { width: '100%', maxWidth: 400, backgroundColor: '#007bff', padding: 15, borderRadius: 8, alignItems: 'center', marginBottom: 12 },
-  textoBotao: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  botaoSobre: { width: '100%', maxWidth: 400, backgroundColor: '#6c757d', padding: 15, borderRadius: 8, alignItems: 'center', marginBottom: 15 },
-  textoBotaoSobre: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  linkCadastro: { color: '#007bff', fontSize: 14, marginTop: 10 }
+  container: { flex: 1, backgroundColor: '#F1F5F9' },
+  authScroll: { flexGrow: 1, justifyContent: 'center', padding: 24, maxWidth: 520, width: '100%', alignSelf: 'center' },
+  authCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 36,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 5,
+    width: '100%'
+  },
+  authTitle: { fontSize: 26, fontWeight: 'bold', color: '#0F172A', marginBottom: 8 },
+  authSubtitle: { fontSize: 14.5, color: '#64748B', marginBottom: 24, lineHeight: 22 },
+  label: { fontSize: 13.5, fontWeight: '600', color: '#334155', marginBottom: 6, marginTop: 4 },
+  input: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: '#0F172A',
+    marginBottom: 12
+  },
+  primaryButton: {
+    backgroundColor: '#2563EB',
+    borderRadius: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    marginTop: 8
+  },
+  primaryButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
+  linkButton: { marginTop: 18, alignItems: 'center' },
+  linkText: { color: '#2563EB', fontSize: 14.5, fontWeight: '600' },
+  backText: { color: '#64748B', fontSize: 14 },
 });
