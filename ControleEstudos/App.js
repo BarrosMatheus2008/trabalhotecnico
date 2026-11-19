@@ -19,7 +19,6 @@ import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 
-// SEU IPV4 DA REDE (usado fora da web; na web usa localhost:3000)
 const IPV4_REDE = 'http://172.20.135.89:3000';
 export const API_URL = Platform.OS === 'web' ? 'http://localhost:3000' : IPV4_REDE;
 
@@ -32,6 +31,15 @@ export const showAlert = (titulo, mensagem, onConfirm = null) => {
     Alert.alert(titulo, mensagem, [{ text: 'OK', onPress: onConfirm }]);
   }
 };
+
+function extrairListaUsuarios(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.usuarios)) return payload.usuarios;
+  if (Array.isArray(payload?.users)) return payload.users;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.rows)) return payload.rows;
+  return [];
+}
 
 export default function App() {
   const [telaAtual, setTelaAtual] = useState('visitante');
@@ -47,7 +55,7 @@ export default function App() {
   const [conteudo, setConteudo] = useState('');
   const [horasEstudadas, setHorasEstudadas] = useState('');
   const [statusEstudo, setStatusEstudo] = useState('Pendente');
-  const [prioridade, setPrioridade] = useState('Média');
+  const [prioridade, setPrioridade] = useState('Media');
 
   const [listaEstudos, setListaEstudos] = useState([]);
   const [resumoAdmin, setResumoAdmin] = useState(null);
@@ -68,9 +76,12 @@ export default function App() {
         setUsuario(parsedUser);
         setTelaAtual('home');
         buscarEstudos(tokenSalvo);
-        if (parsedUser.nivel === 'admin') {
+        if (String(parsedUser?.nivel || '').toLowerCase() === 'admin') {
           buscarResumoAdmin(tokenSalvo);
           buscarUsuariosAdmin(tokenSalvo);
+        } else {
+          setResumoAdmin(null);
+          setUsuariosLista([]);
         }
       }
     } catch (error) {
@@ -86,7 +97,7 @@ export default function App() {
     setConteudo('');
     setHorasEstudadas('');
     setStatusEstudo('Pendente');
-    setPrioridade('Média');
+    setPrioridade('Media');
   };
 
   const realizarLogout = async () => {
@@ -111,9 +122,9 @@ export default function App() {
           'Authorization': `Bearer ${tokenAtivo}`
         }
       });
+      const data = await response.json().catch(() => null);
       if (response.ok) {
-        const data = await response.json();
-        setResumoAdmin(data.resumo);
+        setResumoAdmin(data?.resumo || data || null);
       }
     } catch (error) {
       console.error('Erro ao buscar resumo admin:', error);
@@ -129,9 +140,13 @@ export default function App() {
           'Authorization': `Bearer ${tokenAtivo}`
         }
       });
+      const data = await response.json().catch(() => null);
       if (response.ok) {
-        const data = await response.json();
-        setUsuariosLista(data);
+        const lista = extrairListaUsuarios(data);
+        setUsuariosLista(lista);
+      } else {
+        console.warn('GET /admin/usuarios retornou erro:', response.status, data);
+        setUsuariosLista([]);
       }
     } catch (error) {
       console.error('Erro ao buscar usuarios admin:', error);
@@ -149,9 +164,9 @@ export default function App() {
       const data = await response.json().catch(() => ({}));
       if (response.ok) {
         showAlert('Removido', data.mensagem || 'Usuario excluido!');
-        buscarUsuariosAdmin();
-        buscarResumoAdmin();
-        buscarEstudos();
+        await buscarUsuariosAdmin();
+        await buscarResumoAdmin();
+        await buscarEstudos();
       } else {
         showAlert('Erro', data.erro || 'Nao foi possivel excluir usuario.');
       }
@@ -173,8 +188,10 @@ export default function App() {
         showAlert('Sessao expirada', 'Faca login novamente.', realizarLogout);
         return;
       }
-      const data = await response.json();
-      if (response.ok) setListaEstudos(data);
+      const data = await response.json().catch(() => []);
+      if (response.ok) {
+        setListaEstudos(Array.isArray(data) ? data : []);
+      }
     } catch (error) {
       console.error('Erro ao buscar estudos:', error);
     }
@@ -186,7 +203,7 @@ export default function App() {
     setConteudo(item.conteudo || '');
     setHorasEstudadas(String(item.horasEstudadas ?? ''));
     setStatusEstudo(item.status || 'Pendente');
-    setPrioridade(item.prioridade || 'Média');
+    setPrioridade(item.prioridade || 'Media');
     setAbaLogado('formulario');
   };
 
@@ -225,7 +242,7 @@ export default function App() {
         );
         limparFormularioEstudo();
         buscarEstudos();
-        if (usuario?.nivel === 'admin') {
+        if (String(usuario?.nivel || '').toLowerCase() === 'admin') {
           buscarResumoAdmin();
         }
         setAbaLogado('painel');
@@ -248,7 +265,7 @@ export default function App() {
         if (editandoId === id) limparFormularioEstudo();
         showAlert('Removido', 'Registro de estudo excluido.');
         buscarEstudos();
-        if (usuario?.nivel === 'admin') {
+        if (String(usuario?.nivel || '').toLowerCase() === 'admin') {
           buscarResumoAdmin();
         }
       } else {
@@ -267,7 +284,7 @@ export default function App() {
     setAbaLogado('painel');
     setTelaAtual('home');
     buscarEstudos(data.token);
-    if (data.usuario?.nivel === 'admin') {
+    if (String(data?.usuario?.nivel || '').toLowerCase() === 'admin') {
       buscarResumoAdmin(data.token);
       buscarUsuariosAdmin(data.token);
     } else {
@@ -275,6 +292,8 @@ export default function App() {
       setUsuariosLista([]);
     }
   };
+
+  const ehAdmin = String(usuario?.nivel || '').toLowerCase() === 'admin';
 
   if (inicializando) {
     return (
@@ -432,7 +451,7 @@ export default function App() {
             style={[styles.navTab, abaLogado === 'perfil' && styles.navTabActive]}
             onPress={() => {
               setAbaLogado('perfil');
-              if (usuario?.nivel === 'admin') {
+              if (ehAdmin) {
                 buscarUsuariosAdmin();
                 buscarResumoAdmin();
               }
@@ -450,7 +469,7 @@ export default function App() {
           <HomeScreen
             modo="logado"
             usuario={usuario}
-            resumoAdmin={resumoAdmin}
+            resumoAdmin={ehAdmin ? resumoAdmin : null}
             listaEstudos={listaEstudos}
             onEditarEstudo={iniciarEdicaoEstudo}
             onExcluirEstudo={deletarEstudo}
@@ -486,10 +505,10 @@ export default function App() {
         {abaLogado === 'perfil' && (
           <ProfileScreen
             usuario={usuario}
-            resumoAdmin={resumoAdmin}
+            resumoAdmin={ehAdmin ? resumoAdmin : null}
             totalEstudos={listaEstudos.length}
-            usuariosLista={usuariosLista}
-            onExcluirUsuario={excluirUsuarioAdmin}
+            usuariosLista={ehAdmin ? usuariosLista : []}
+            onExcluirUsuario={ehAdmin ? excluirUsuarioAdmin : undefined}
             onLogout={realizarLogout}
           />
         )}
@@ -538,5 +557,5 @@ const styles = StyleSheet.create({
   navTabTextActive: { color: '#FFFFFF', fontWeight: 'bold' },
   scrollContainer: { padding: 24, maxWidth: 1280, width: '100%', alignSelf: 'center' },
   logoutButton: { backgroundColor: '#EF4444', paddingHorizontal: 16, paddingVertical: 9, borderRadius: 10 },
-  logoutText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 13.5 },
+  logoutText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 13.5 }
 });
