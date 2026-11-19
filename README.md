@@ -1,20 +1,36 @@
 # Controle de Estudos Pro
 
-Aplicacao full-stack em **React Native (Expo)**, **Node.js (Express)** e **MySQL** com autenticacao **JWT (`Bearer Token`)**, hash de senha (`bcryptjs`), controle de niveis (`comum` e `admin`) e CRUD completo de estudos.
+Aplicação full-stack para organização e acompanhamento de estudos, com autenticação via **JWT**, senhas criptografadas com **bcrypt**, persistência em **MySQL** e interface desenvolvida em **React Native + Expo** (suportando Web e Mobile).
 
-## Problema e Solucao
-Estudantes costumam perder o controle de horas dedicadas, prioridades e status dos conteudos entre varias disciplinas. O aplicativo centraliza o registro e acompanhamento dos estudos com autenticacao segura e persistencia em banco relacional.
+## Funcionalidades
 
-## Estrutura de Pastas
-- `api-mysql/database.sql`: script de criacao do banco `controle_estudos` e tabelas `usuarios` e `estudos`.
-- `api-mysql/server.js`: API REST com cadastro, login, hash de senha, middleware JWT, controle de nivel e rotas CRUD (`GET`, `POST`, `PUT`, `DELETE`).
-- `ControleEstudos/App.js`: interface principal do aplicativo (modo visitante, login, cadastro, painel de estatisticas e CRUD).
-- `ControleEstudos/SobreAppSection.js`: secao informativa e simulador de carga horaria.
+- **Modo Visitante**: navegação inicial, apresentação do sistema e acesso ao fluxo de login/cadastro.
+- **Autenticação e Níveis de Acesso**:
+  - Cadastro e login de usuários com `bcrypt` e token `JWT` (`Bearer Token`).
+  - Separação entre visão de **usuário comum** e visão de **administrador** (`admin`).
+- **CRUD de Estudos**:
+  - Criar, listar, editar e excluir registros de estudo (`disciplina`, `conteudo`, `horasEstudadas`, `status` e `prioridade`).
+- **Gestão Administrativa de Usuários**:
+  - Visualização de usuários cadastrados com busca por nome/e-mail, filtros por nível (`Todos`, `Comuns`, `Admins`) e cards expansíveis.
+  - Exclusão de contas de usuários pelo administrador com remoção segura dos estudos vinculados.
 
-## Como Rodar
-1. **Banco MySQL**: execute `api-mysql/database.sql` no seu servidor MySQL.
-2. **API REST**:
-   ```bash
-   cd api-mysql
-   npm install express mysql2 bcryptjs jsonwebtoken cors
-   node server.js
+## Stack Tecnológica
+
+- **Front-end**: React Native, Expo, AsyncStorage
+- **Back-end**: Node.js, Express, JWT (`jsonwebtoken`), `bcryptjs`, `cors`
+- **Banco de Dados**: MySQL (`mysql2/promise`)
+
+## Estrutura do Projeto
+
+```text
+Trabalhotec/
+├── api-mysql/
+│   ├── server.js          # API REST, autenticação JWT, CRUD de estudos e rotas /admin
+│   ├── database.sql       # Script de criação/estrutura das tabelas
+│   └── package.json
+├── ControleEstudos/
+│   ├── App.js             # Navegação principal, sessão e integração com a API
+│   ├── src/
+│   │   └── screens/       # Telas (HomeScreen, FormScreen, ProfileScreen, LoginScreen, RegisterScreen, AboutScreen)
+│   └── package.json
+└── README.md
